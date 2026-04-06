@@ -1,0 +1,9 @@
+D:\Lethal Company\HappyMods\HDPlus\HDPlus\bin\Debug\netstandard2.1\happyness.hdplus.deps.json
+D:\Lethal Company\HappyMods\HDPlus\HDPlus\bin\Debug\netstandard2.1\happyness.hdplus.dll
+D:\Lethal Company\HappyMods\HDPlus\HDPlus\obj\Debug\netstandard2.1\HDPlus.csproj.AssemblyReference.cache
+D:\Lethal Company\HappyMods\HDPlus\HDPlus\obj\Debug\netstandard2.1\MyPluginInfo.cs
+D:\Lethal Company\HappyMods\HDPlus\HDPlus\obj\Debug\netstandard2.1\HDPlus.GeneratedMSBuildEditorConfig.editorconfig
+D:\Lethal Company\HappyMods\HDPlus\HDPlus\obj\Debug\netstandard2.1\HDPlus.AssemblyInfoInputs.cache
+D:\Lethal Company\HappyMods\HDPlus\HDPlus\obj\Debug\netstandard2.1\HDPlus.AssemblyInfo.cs
+D:\Lethal Company\HappyMods\HDPlus\HDPlus\obj\Debug\netstandard2.1\HDPlus.csproj.CoreCompileInputs.cache
+D:\Lethal Company\HappyMods\HDPlus\HDPlus\obj\Debug\netstandard2.1\happyness.hdplus.dll
