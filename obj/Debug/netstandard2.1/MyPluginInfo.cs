@@ -4,6 +4,6 @@ namespace HDPlus
     {
         public const string PLUGIN_GUID = "happyness.hdplus";
         public const string PLUGIN_NAME = "HDPlus";
-        public const string PLUGIN_VERSION = "1.0.0";
+        public const string PLUGIN_VERSION = "1.1.0";
     }
 }
