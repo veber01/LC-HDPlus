@@ -55,7 +55,7 @@ namespace HDPlus.Patches
         private static (int width, int height, string label) ActivePreset => UWOn ? UWPresets[UWIndex] : Presets[Indexx];
         private static float ActiveAspect => (float)ActivePreset.width / ActivePreset.height;
         private static Vector2 oldboxsize = Vector2.zero;
-        private static RectTransform newboxsize = null;
+        private static RectTransform? newboxsize = null;
 
         private static void applyres(RenderTexture rt)
         {
@@ -87,112 +87,91 @@ namespace HDPlus.Patches
 
         private static void UWStuff()
         {
+            CacheReferences();
             float aspect = ActiveAspect;
 
-            Camera camera = GameNetworkManager.Instance?.localPlayerController?.gameplayCamera;
+            Camera? camera = GameNetworkManager.Instance?.localPlayerController?.gameplayCamera;
             camera?.ResetAspect();
 
-            GameObject panelObject = GameObject.Find("Systems/UI/Canvas/Panel");
-            if (panelObject != null && panelObject.TryGetComponent(out AspectRatioFitter arf))
+            if (_panel != null)
             {
-                arf.enabled = true;
-                arf.aspectRatio = aspect;
+                _panel.enabled = true;
+                _panel.aspectRatio = aspect;
             }
 
-            GameObject canvasObject = GameObject.Find("Systems/UI/Canvas");
-            if (canvasObject != null && canvasObject.TryGetComponent(out CanvasScaler canvasScaler))
-                canvasScaler.referenceResolution = new Vector2(500f * aspect, 500f);
+            if (_canvas != null)
+                _canvas.referenceResolution = new Vector2(500f * aspect, 500f);
 
             HUDManager hudManager = HUDManager.Instance;
             if (hudManager != null)
             {
-                GameObject terminalObject = GameObject.Find("TerminalScript");
-                if (terminalObject != null && terminalObject.TryGetComponent(out Terminal terminal))
+                if (_terminal?.playerScreenTexHighRes != null)
                 {
-                    RenderTexture termTex = terminal.playerScreenTexHighRes;
+                    RenderTexture termTex = _terminal.playerScreenTexHighRes;
                     termTex.Release();
                     termTex.height = 580;
                     termTex.width = Convert.ToInt32(580 * aspect);
                 }
-
-                GameObject hudObject = hudManager.HUDContainer;
-                if (hudObject != null && hudObject.TryGetComponent(out AspectRatioFitter arf2))
-                    arf2.aspectRatio = aspect;
-
-                GameObject uiCamObject = GameObject.Find("Systems/UI/UICamera");
-                if (uiCamObject != null && uiCamObject.TryGetComponent(out Camera uiCamera))
-                    uiCamera.fieldOfView = Mathf.Min(106f / aspect, 60f);
-
-                GameObject inventoryObject = hudManager.Inventory.canvasGroup.gameObject;
-                if (inventoryObject != null && inventoryObject.TryGetComponent(out RectTransform invRect))
+                if (_hud != null) _hud.aspectRatio = aspect;
+                if (_camera != null) _camera.fieldOfView = Mathf.Min(106f / aspect, 60f);
+                if (_invrect != null)
                 {
-                    invRect.anchoredPosition = Vector2.zero;
-                    invRect.anchorMax = new Vector2(0.5f, 0f);
-                    invRect.anchorMin = new Vector2(0.5f, 0.5f);
-                    invRect.pivot = new Vector2(0.5f, 0f);
+                    _invrect.anchoredPosition = Vector2.zero;
+                    _invrect.anchorMax = new Vector2(0.5f, 0f);
+                    _invrect.anchorMin = new Vector2(0.5f, 0.5f);
+                    _invrect.pivot = new Vector2(0.5f, 0f);
                 }
-
-                GameObject helmetModel = GameObject.Find("PlayerHUDHelmetModel");
-                if (helmetModel != null && helmetModel.TryGetComponent(out Transform helmetTransform))
+                if (_helmet != null)
                 {
-                    Vector3 scale = helmetTransform.localScale;
+                    Vector3 scale = _helmet.localScale;
                     scale.x = 0.3628f * Mathf.Max(aspect / 2.3f, 1f);
-                    helmetTransform.localScale = scale;
+                    _helmet.localScale = scale;
                 }
             }
         }
         private static bool IsVanilla => !UWOn && Indexx == 0;
         private static void ResetAspect()
         {
+            CacheReferences();
             if (!_originalsCaptured)
             {
-                Plugin.Logger.LogWarning("[HDPlus] ResetAspect called but originals not captured");
                 return;
             }
 
-            Camera camera = GameNetworkManager.Instance?.localPlayerController?.gameplayCamera; camera?.ResetAspect();
-            GameObject panelObject = GameObject.Find("Systems/UI/Canvas/Panel");
-            if (panelObject != null && panelObject.TryGetComponent(out AspectRatioFitter arf))
+            if (_panel != null)
             {
-                arf.aspectRatio = _originalPanelAspect;
-                arf.enabled = !IsVanilla;
+                _panel.aspectRatio = _originalPanelAspect;
+                _panel.enabled = !IsVanilla;
             }
-
-            GameObject canvasObject = GameObject.Find("Systems/UI/Canvas");
-            if (canvasObject != null && canvasObject.TryGetComponent(out CanvasScaler canvasScaler))
+            if (_canvas != null)
             {
-                canvasScaler.referenceResolution = _originalCanvasRes;
+                _canvas.referenceResolution = _originalCanvasRes;
             }
 
             HUDManager hudManager = HUDManager.Instance;
             if (hudManager != null)
             {
-                GameObject hudObject = hudManager.HUDContainer;
-                if (hudObject != null && hudObject.TryGetComponent(out AspectRatioFitter arf2))
+                if (_hud != null)
                 {
-                    arf2.aspectRatio = _originalHudAspect;
+                    _hud.aspectRatio = _originalHudAspect;
+                }
+                if (_camera != null)
+                {
+                    _camera.fieldOfView = _originalUICamFOV;
                 }
 
-                GameObject uiCamObject = GameObject.Find("Systems/UI/UICamera");
-                if (uiCamObject != null && uiCamObject.TryGetComponent(out Camera uiCamera))
+                if (_invrect != null)
                 {
-                    uiCamera.fieldOfView = _originalUICamFOV;
+                    _invrect.anchorMin = _originalInvAnchorMin;
+                    _invrect.anchorMax = _originalInvAnchorMax;
+                    _invrect.pivot = _originalInvPivot;
+                    _invrect.anchoredPosition = _originalInvPos;
                 }
-
-                GameObject inventoryObject = hudManager.Inventory.canvasGroup.gameObject;
-                if (inventoryObject != null && inventoryObject.TryGetComponent(out RectTransform invRect))
+                if (_helmet != null)
                 {
-                    invRect.anchorMin = _originalInvAnchorMin;
-                    invRect.anchorMax = _originalInvAnchorMax;
-                    invRect.pivot = _originalInvPivot;
-                    invRect.anchoredPosition = _originalInvPos;
-                }
-                GameObject helmetModel = GameObject.Find("PlayerHUDHelmetModel");
-                if (helmetModel != null && helmetModel.TryGetComponent(out Transform helmetTransform))
-                {
-                    Vector3 scale = helmetTransform.localScale;
+                    Vector3 scale = _helmet.localScale;
                     scale.x = _originalHelmetX;
-                    helmetTransform.localScale = scale;
+                    _helmet.localScale = scale;
                 }
             }
         }
@@ -208,50 +187,83 @@ namespace HDPlus.Patches
         private static Vector2 _originalInvAnchorMax = Vector2.zero;
         private static Vector2 _originalInvPivot = Vector2.zero;
         private static Vector2 _originalInvPos = Vector2.zero;
+        private static AspectRatioFitter? _panel = null;
+        private static CanvasScaler? _canvas = null;
+        private static Camera? _camera = null;
+        private static RectTransform? _invrect = null;
+        private static Transform? _helmet = null;
+        private static Terminal? _terminal = null;
+        private static AspectRatioFitter? _hud = null;
+
+        private static void CacheReferences()
+        {
+            if (_panel == null)
+            {
+                GameObject panel = GameObject.Find("Systems/UI/Canvas/Panel");
+                panel?.TryGetComponent(out _panel);
+            }
+            if (_canvas == null)
+            {
+                GameObject canvas = GameObject.Find("Systems/UI/Canvas");
+                canvas?.TryGetComponent(out _canvas);
+            }
+            if (_camera == null)
+            {
+                GameObject uiCam = GameObject.Find("Systems/UI/UICamera");
+                uiCam?.TryGetComponent(out _camera);
+            }
+            if (_helmet == null)
+            {
+                GameObject? helmet = GameObject.Find("PlayerHUDHelmetModel");
+                if (helmet != null)
+                    _helmet = helmet.transform;
+            }
+            if (_terminal == null)
+            {
+                GameObject terminalObj = GameObject.Find("TerminalScript");
+                terminalObj?.TryGetComponent(out _terminal);
+            }
+            if (_hud == null && HUDManager.Instance != null)
+            {
+                HUDManager.Instance.HUDContainer
+                    ?.TryGetComponent(out _hud);
+            }
+            if (_invrect == null && HUDManager.Instance != null)
+            {
+                _invrect = HUDManager.Instance.Inventory?.canvasGroup?.GetComponent<RectTransform>();
+            }
+        }
 
         private static void SaveOrigs()
         {
-
             if (_originalsCaptured) return;
 
-            GameObject panelObject = GameObject.Find("Systems/UI/Canvas/Panel");
-            if (panelObject != null && panelObject.TryGetComponent(out AspectRatioFitter arf))
-                _originalPanelAspect = arf.aspectRatio;
+            CacheReferences();
 
-            GameObject canvasObject = GameObject.Find("Systems/UI/Canvas");
-            if (canvasObject != null && canvasObject.TryGetComponent(out CanvasScaler canvasScaler))
-                _originalCanvasRes = canvasScaler.referenceResolution;
+            if (_panel != null)
+                _originalPanelAspect = _panel.aspectRatio;
 
-            HUDManager hudManager = HUDManager.Instance;
-            if (hudManager != null)
+            if (_canvas != null)
+                _originalCanvasRes = _canvas.referenceResolution;
+
+            if (_hud != null)
+                _originalHudAspect = _hud.aspectRatio;
+
+            if (_camera != null)
+                _originalUICamFOV = _camera.fieldOfView;
+
+            if (_helmet != null)
+                _originalHelmetX = _helmet.localScale.x;
+
+            if (_invrect != null)
             {
-                GameObject hudObject = hudManager.HUDContainer;
-                if (hudObject != null && hudObject.TryGetComponent(out AspectRatioFitter arf2))
-                    _originalHudAspect = arf2.aspectRatio;
-
-                GameObject uiCamObject = GameObject.Find("Systems/UI/UICamera");
-                if (uiCamObject != null && uiCamObject.TryGetComponent(out Camera uiCamera))
-                    _originalUICamFOV = uiCamera.fieldOfView;
-
-                GameObject helmetModel = GameObject.Find("PlayerHUDHelmetModel");
-                if (helmetModel != null && helmetModel.TryGetComponent(out Transform helmetTransform))
-                    _originalHelmetX = helmetTransform.localScale.x;
-
-                GameObject inventoryObject = hudManager.Inventory.canvasGroup.gameObject;
-                if (inventoryObject != null && inventoryObject.TryGetComponent(out RectTransform invRect))
-                {
-                    _originalInvAnchorMin = invRect.anchorMin;
-                    _originalInvAnchorMax = invRect.anchorMax;
-                    _originalInvPivot = invRect.pivot;
-                    _originalInvPos = invRect.anchoredPosition;
-                }
+                _originalInvAnchorMin = _invrect.anchorMin;
+                _originalInvAnchorMax = _invrect.anchorMax;
+                _originalInvPivot = _invrect.pivot;
+                _originalInvPos = _invrect.anchoredPosition;
             }
 
-
-            if (_originalPanelAspect > 0)
-            {
-                _originalsCaptured = true;
-            }
+            _originalsCaptured = _panel != null;
         }
 
 
@@ -335,7 +347,7 @@ namespace HDPlus.Patches
             SettingsOption[] bruh = UnityEngine.Object.FindObjectsOfType<SettingsOption>(includeInactive: true);
             if (bruh == null || bruh.Length == 0) return;
 
-            Transform container = null;
+            Transform? container = null;
             Transform[] allTransforms = UnityEngine.Object.FindObjectsOfType<Transform>(includeInactive: true);
             foreach (Transform t in allTransforms)
             {
@@ -364,10 +376,10 @@ namespace HDPlus.Patches
                 }
             }
 
-            RectTransform pixelResRect = container.Find("PixelRes")?.GetComponent<RectTransform>();
+            RectTransform? pixelResRect = container.Find("PixelRes")?.GetComponent<RectTransform>();
             RectTransform rootRect = root.AddComponent<RectTransform>();
             Image rootBg = root.AddComponent<Image>();
-            GameObject pixelResObj = container.Find("PixelRes")?.gameObject;
+            GameObject? pixelResObj = container.Find("PixelRes")?.gameObject;
             if (pixelResObj != null)
             {
                 Image sourceImg = pixelResObj.GetComponentInChildren<Image>();
@@ -439,9 +451,6 @@ namespace HDPlus.Patches
                             }
                         }
                         break;
-
-
-
                     }
                 }
             }
@@ -589,13 +598,6 @@ namespace HDPlus.Patches
                 }
             }
         }
-
-
-
-
-
-
-
     }
 
     internal class Reselement : MonoBehaviour { }

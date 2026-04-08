@@ -1,3 +1,7 @@
+# v1.1.2
+
+- Added cached references to not overuse objectfinders when it is not necessary (less expensive).
+
 # v1.1.1
 
 - Slightly changed settings menu look so the new resolution option fits inside the "Graphics" tab.
