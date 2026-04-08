@@ -54,6 +54,8 @@ namespace HDPlus.Patches
         private static bool UWOn => Plugin.UWEnabled.Value;
         private static (int width, int height, string label) ActivePreset => UWOn ? UWPresets[UWIndex] : Presets[Indexx];
         private static float ActiveAspect => (float)ActivePreset.width / ActivePreset.height;
+        private static Vector2 oldboxsize = Vector2.zero;
+        private static RectTransform newboxsize = null;
 
         private static void applyres(RenderTexture rt)
         {
@@ -148,7 +150,7 @@ namespace HDPlus.Patches
                 return;
             }
 
-            Camera camera = GameNetworkManager.Instance?.localPlayerController?.gameplayCamera;camera?.ResetAspect();
+            Camera camera = GameNetworkManager.Instance?.localPlayerController?.gameplayCamera; camera?.ResetAspect();
             GameObject panelObject = GameObject.Find("Systems/UI/Canvas/Panel");
             if (panelObject != null && panelObject.TryGetComponent(out AspectRatioFitter arf))
             {
@@ -402,6 +404,48 @@ namespace HDPlus.Patches
                 rootRect.sizeDelta = new Vector2(184f, 30f);
                 rootRect.anchoredPosition = Vector2.zero;
             }
+
+            if (newboxsize == null)
+            {
+                Transform[] allT = UnityEngine.Object.FindObjectsOfType<Transform>(includeInactive: true);
+                foreach (Transform t in allT)
+                {
+                    if (t.name == "Graphics")
+                    {
+                        Transform parent = t.parent;
+                        if (parent == null) break;
+                        bool foundGraphics = false;
+                        for (int j = 0; j < parent.childCount; j++)
+                        {
+                            Transform child = parent.GetChild(j);
+                            if (child.name == "Graphics") { foundGraphics = true; continue; }
+                            if (foundGraphics && child.name.StartsWith("BoxFrame"))
+                            {
+                                newboxsize = child.GetComponent<RectTransform>();
+                                if (newboxsize != null && pixelResRect != null)
+                                {
+                                    oldboxsize = newboxsize.sizeDelta;
+                                    float growth = pixelResRect.sizeDelta.y + 20f;
+                                    newboxsize.sizeDelta = new Vector2(
+                                        oldboxsize.x,
+                                        oldboxsize.y + growth
+                                    );
+                                    newboxsize.anchoredPosition = new Vector2(
+                                        newboxsize.anchoredPosition.x,
+                                        newboxsize.anchoredPosition.y - (growth / 2f)
+                                    );
+                                }
+                                break;
+                            }
+                        }
+                        break;
+
+
+
+                    }
+                }
+            }
+
             GameObject label = new GameObject("Label");
             label.transform.SetParent(root.transform, worldPositionStays: false);
             RectTransform labelRect = label.AddComponent<RectTransform>();
@@ -410,7 +454,7 @@ namespace HDPlus.Patches
             labelRect.sizeDelta = Vector2.zero;
             labelRect.anchoredPosition = Vector2.zero;
             TextMeshProUGUI labelText = label.AddComponent<TextMeshProUGUI>();
-            labelText.text = "RESOLUTION";
+            labelText.text = "Resolution";
             labelText.fontSize = 13f;
             labelText.alignment = TextAlignmentOptions.MidlineLeft;
             font(labelText, bruh);
