@@ -1,6 +1,6 @@
 {
 	"name": "HDPlus",
-	"version_number": "1.1.2",
+	"version_number": "1.2.0",
 	"website_url": "https://github.com/veber01/LC-HDPlus",
 	"description": "A mod that allow to change render resolution in-game. Supports ultra-wide resolutions. v80+.",
 	"dependencies": [

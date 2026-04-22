@@ -5,7 +5,7 @@
   },
   "projects": {
     "D:\\Lethal Company\\HappyMods\\HDPlus\\HDPlus\\HDPlus.csproj": {
-      "version": "1.1.2",
+      "version": "1.2.0",
       "restore": {
         "projectUniqueName": "D:\\Lethal Company\\HappyMods\\HDPlus\\HDPlus\\HDPlus.csproj",
         "projectName": "happyness.hdplus",
@@ -14,7 +14,6 @@
         "outputPath": "D:\\Lethal Company\\HappyMods\\HDPlus\\HDPlus\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "D:\\Lethal Company\\HappyMods\\NuGet.Config",
           "C:\\Users\\veber\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
@@ -23,7 +22,6 @@
         "sources": {
           "https://api.nuget.org/v3/index.json": {},
           "https://api.nuget.org/v3/index.json": {},
-          "https://nuget.bepinex.dev/v3/index.json": {},
           "https://nuget.bepinex.dev/v3/index.json": {}
         },
         "frameworks": {
@@ -41,7 +39,8 @@
           "enableAudit": "true",
           "auditLevel": "low",
           "auditMode": "direct"
-        }
+        },
+        "SdkAnalysisLevel": "10.0.200"
       },
       "frameworks": {
         "netstandard2.1": {
@@ -95,7 +94,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.415\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.202\\RuntimeIdentifierGraph.json"
         }
       }
     }

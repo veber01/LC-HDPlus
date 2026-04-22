@@ -52,6 +52,7 @@ namespace HDPlus.Patches
             set => _uwIndex = Mathf.Clamp(value, 0, UWPresets.Length - 1);
         }
         private static bool UWOn => Plugin.UWEnabled.Value;
+        private static bool _previousUWState = false;
         private static (int width, int height, string label) ActivePreset => UWOn ? UWPresets[UWIndex] : Presets[Indexx];
         private static float ActiveAspect => (float)ActivePreset.width / ActivePreset.height;
         private static Vector2 oldboxsize = Vector2.zero;
@@ -79,19 +80,30 @@ namespace HDPlus.Patches
                     applyres(p.gameplayCamera.targetTexture);
             }
 
-            if (UWOn)
+            if (UWOn && !_previousUWState)
+            {
                 UWStuff();
-            else
+            }
+            else if (!UWOn && _previousUWState)
+            {
                 ResetAspect();
+            }
+
+            _previousUWState = UWOn;
         }
 
         private static void UWStuff()
         {
             CacheReferences();
+            SavePreUWState();
             float aspect = ActiveAspect;
 
             Camera? camera = GameNetworkManager.Instance?.localPlayerController?.gameplayCamera;
             camera?.ResetAspect();
+            if (camera != null)
+            {
+                camera.fieldOfView = Mathf.Min(106f / aspect, 60f);
+            }
 
             if (_panel != null)
             {
@@ -130,6 +142,48 @@ namespace HDPlus.Patches
             }
         }
         private static bool IsVanilla => !UWOn && Indexx == 0;
+
+        private static void SavePreUWState()
+        {
+            CacheReferences();
+
+            if (_panel != null)
+            {
+                _preUWPanelAspect = _panel.aspectRatio;
+                _preUWPanelEnabled = _panel.enabled;
+            }
+
+            if (_canvas != null)
+                _preUWCanvasRes = _canvas.referenceResolution;
+
+            if (_hud != null)
+                _preUWHudAspect = _hud.aspectRatio;
+
+            if (_camera != null)
+                _preUWUICamFOV = _camera.fieldOfView;
+
+            Camera? gameplayCamera = GameNetworkManager.Instance?.localPlayerController?.gameplayCamera;
+            if (gameplayCamera != null)
+                _preUWGameplayFOV = gameplayCamera.fieldOfView;
+
+            if (_helmet != null)
+                _preUWHelmetX = _helmet.localScale.x;
+
+            if (_invrect != null)
+            {
+                _preUWInvAnchorMin = _invrect.anchorMin;
+                _preUWInvAnchorMax = _invrect.anchorMax;
+                _preUWInvPivot = _invrect.pivot;
+                _preUWInvPos = _invrect.anchoredPosition;
+            }
+
+            if (_terminal?.playerScreenTexHighRes != null)
+            {
+                _preUWTerminalWidth = _terminal.playerScreenTexHighRes.width;
+                _preUWTerminalHeight = _terminal.playerScreenTexHighRes.height;
+            }
+        }
+
         private static void ResetAspect()
         {
             CacheReferences();
@@ -138,6 +192,12 @@ namespace HDPlus.Patches
                 return;
             }
 
+            Camera? camera = GameNetworkManager.Instance?.localPlayerController?.gameplayCamera;
+            if (camera != null)
+            {
+                camera.fieldOfView = _originalGameplayFOV;
+                camera.ResetAspect();
+            }
             if (_panel != null)
             {
                 _panel.aspectRatio = _originalPanelAspect;
@@ -151,6 +211,16 @@ namespace HDPlus.Patches
             HUDManager hudManager = HUDManager.Instance;
             if (hudManager != null)
             {
+                if (_terminal?.playerScreenTexHighRes != null)
+                {
+                    if (_originalTerminalWidth > 0 && _originalTerminalHeight > 0)
+                    {
+                        RenderTexture termTex = _terminal.playerScreenTexHighRes;
+                        termTex.Release();
+                        termTex.width = _originalTerminalWidth;
+                        termTex.height = _originalTerminalHeight;
+                    }
+                }
                 if (_hud != null)
                 {
                     _hud.aspectRatio = _originalHudAspect;
@@ -180,6 +250,7 @@ namespace HDPlus.Patches
         private static float _originalPanelAspect = -1f;
         private static float _originalHudAspect = -1f;
         private static float _originalUICamFOV = -1f;
+        private static float _originalGameplayFOV = -1f;
         private static float _originalHelmetX = -1f;
         private static Vector2 _originalCanvasRes = Vector2.zero;
         private static bool _originalsCaptured = false;
@@ -187,6 +258,21 @@ namespace HDPlus.Patches
         private static Vector2 _originalInvAnchorMax = Vector2.zero;
         private static Vector2 _originalInvPivot = Vector2.zero;
         private static Vector2 _originalInvPos = Vector2.zero;
+        private static int _originalTerminalWidth = -1;
+        private static int _originalTerminalHeight = -1;
+        private static float _preUWPanelAspect = -1f;
+        private static bool _preUWPanelEnabled = false;
+        private static float _preUWHudAspect = -1f;
+        private static float _preUWUICamFOV = -1f;
+        private static float _preUWGameplayFOV = -1f;
+        private static float _preUWHelmetX = -1f;
+        private static Vector2 _preUWCanvasRes = Vector2.zero;
+        private static Vector2 _preUWInvAnchorMin = Vector2.zero;
+        private static Vector2 _preUWInvAnchorMax = Vector2.zero;
+        private static Vector2 _preUWInvPivot = Vector2.zero;
+        private static Vector2 _preUWInvPos = Vector2.zero;
+        private static int _preUWTerminalWidth = -1;
+        private static int _preUWTerminalHeight = -1;
         private static AspectRatioFitter? _panel = null;
         private static CanvasScaler? _canvas = null;
         private static Camera? _camera = null;
@@ -252,6 +338,10 @@ namespace HDPlus.Patches
             if (_camera != null)
                 _originalUICamFOV = _camera.fieldOfView;
 
+            Camera? gameplayCamera = GameNetworkManager.Instance?.localPlayerController?.gameplayCamera;
+            if (gameplayCamera != null)
+                _originalGameplayFOV = gameplayCamera.fieldOfView;
+
             if (_helmet != null)
                 _originalHelmetX = _helmet.localScale.x;
 
@@ -263,6 +353,12 @@ namespace HDPlus.Patches
                 _originalInvPos = _invrect.anchoredPosition;
             }
 
+            if (_terminal?.playerScreenTexHighRes != null)
+            {
+                _originalTerminalWidth = _terminal.playerScreenTexHighRes.width;
+                _originalTerminalHeight = _terminal.playerScreenTexHighRes.height;
+            }
+
             _originalsCaptured = _panel != null;
         }
 
@@ -271,6 +367,7 @@ namespace HDPlus.Patches
         [HarmonyPostfix]
         private static void pcb(PlayerControllerB __instance)
         {
+            if (!__instance.IsOwner) return;
             if (__instance.gameplayCamera?.targetTexture == null) return;
             SaveOrigs();
             applyres(__instance.gameplayCamera.targetTexture);
@@ -328,18 +425,34 @@ namespace HDPlus.Patches
 
         private static void Injectbutton(IngamePlayerSettings instance)
         {
+            if (newboxsize != null && newboxsize.Equals(null))
+            {
+                newboxsize = null;
+                oldboxsize = Vector2.zero;
+            }
             var activePresets = UWOn ? UWPresets : Presets;
             int activeIndex = UWOn ? UWIndex : Indexx;
 
-            Reselement existing = UnityEngine.Object.FindObjectOfType<Reselement>(includeInactive: true);
-            if (existing != null)
+            Reselement[] existing = UnityEngine.Object.FindObjectsOfType<Reselement>(includeInactive: true);
+            if (existing != null && existing.Length > 0)
             {
-                Transform vt = existing.transform.Find("Value");
-                if (vt != null)
+                foreach (Reselement el in existing)
                 {
-                    TextMeshProUGUI vtext = vt.GetComponent<TextMeshProUGUI>();
-                    if (vtext != null)
-                        vtext.text = activePresets[activeIndex].label;
+                    Transform vt = el.transform.Find("Value");
+                    if (vt != null)
+                    {
+                        TextMeshProUGUI vtext = vt.GetComponent<TextMeshProUGUI>();
+                        if (vtext != null)
+                            vtext.text = activePresets[activeIndex].label;
+                    }
+
+                    Transform cb = el.transform.Find("Checkbox/Text");
+                    if (cb != null)
+                    {
+                        TextMeshProUGUI cbText = cb.GetComponent<TextMeshProUGUI>();
+                        if (cbText != null)
+                            cbText.text = Plugin.UWEnabled.Value ? "x" : "";
+                    }
                 }
                 return;
             }
@@ -405,7 +518,7 @@ namespace HDPlus.Patches
                 rootRect.sizeDelta = pixelResRect.sizeDelta;
                 rootRect.anchoredPosition = new Vector2(
                     pixelResRect.anchoredPosition.x,
-                    pixelResRect.anchoredPosition.y - (pixelResRect.sizeDelta.y * 2f) - 20f
+                    pixelResRect.anchoredPosition.y - (pixelResRect.sizeDelta.y * 2f) - 10f
                 );
             }
             else
@@ -437,7 +550,7 @@ namespace HDPlus.Patches
                                 if (newboxsize != null && pixelResRect != null)
                                 {
                                     oldboxsize = newboxsize.sizeDelta;
-                                    float growth = pixelResRect.sizeDelta.y + 20f;
+                                    float growth = (pixelResRect.sizeDelta.y * 2f) + 7f;
                                     newboxsize.sizeDelta = new Vector2(
                                         oldboxsize.x,
                                         oldboxsize.y + growth
@@ -550,16 +663,118 @@ namespace HDPlus.Patches
                 }
                 IngamePlayerSettings.Instance.changesNotApplied = true;
             });
+
+            GameObject toggleRoot = new GameObject("menuToggle");
+            toggleRoot.transform.SetParent(container, worldPositionStays: false);
+            toggleRoot.AddComponent<Reselement>();
+
+            RectTransform toggleRootRect = toggleRoot.AddComponent<RectTransform>();
+
+            if (pixelResRect != null)
+            {
+                toggleRootRect.anchorMin = pixelResRect.anchorMin;
+                toggleRootRect.anchorMax = pixelResRect.anchorMax;
+                toggleRootRect.pivot = pixelResRect.pivot;
+                toggleRootRect.sizeDelta = pixelResRect.sizeDelta;
+                toggleRootRect.anchoredPosition = new Vector2(
+                    pixelResRect.anchoredPosition.x,
+                    pixelResRect.anchoredPosition.y - (pixelResRect.sizeDelta.y * 2f) - 40f
+                );
+            }
+            else
+            {
+                toggleRootRect.anchorMin = new Vector2(0.5f, 0.5f);
+                toggleRootRect.anchorMax = new Vector2(0.5f, 0.5f);
+                toggleRootRect.pivot = new Vector2(0.5f, 0.5f);
+                toggleRootRect.sizeDelta = new Vector2(184f, 30f);
+                toggleRootRect.anchoredPosition = new Vector2(0, -125f);
+            }
+
+            GameObject toggleLabel = new GameObject("Label");
+            toggleLabel.transform.SetParent(toggleRoot.transform, worldPositionStays: false);
+            RectTransform toggleLabelRect = toggleLabel.AddComponent<RectTransform>();
+            toggleLabelRect.anchorMin = new Vector2(0.03f, 0f);
+            toggleLabelRect.anchorMax = new Vector2(0.6f, 1f);
+            toggleLabelRect.sizeDelta = Vector2.zero;
+            toggleLabelRect.anchoredPosition = Vector2.zero;
+            TextMeshProUGUI toggleLabelText = toggleLabel.AddComponent<TextMeshProUGUI>();
+            toggleLabelText.text = "Enable ultrawide";
+            toggleLabelText.fontSize = 13f;
+            toggleLabelText.alignment = TextAlignmentOptions.MidlineLeft;
+            font(toggleLabelText, bruh);
+
+            GameObject toggleButton = new GameObject("Checkbox");
+            toggleButton.transform.SetParent(toggleRoot.transform, worldPositionStays: false);
+            RectTransform toggleButtonRect = toggleButton.AddComponent<RectTransform>();
+            toggleButtonRect.anchorMin = new Vector2(0.85f, 0.2f);
+            toggleButtonRect.anchorMax = new Vector2(0.95f, 0.8f);
+            toggleButtonRect.pivot = new Vector2(0.5f, 0.5f);
+            toggleButtonRect.sizeDelta = Vector2.zero;
+            toggleButtonRect.anchoredPosition = Vector2.zero;
+            Image toggleButtonImg = toggleButton.AddComponent<Image>();
+
+            if (pixelResObj != null)
+            {
+                Image sourceImg = pixelResObj.GetComponentInChildren<Image>();
+                if (sourceImg != null)
+                {
+                    toggleButtonImg.sprite = sourceImg.sprite;
+                    toggleButtonImg.type = Image.Type.Sliced;
+                    toggleButtonImg.fillCenter = true;
+                    toggleButtonImg.color = sourceImg.color;
+                    toggleButtonImg.pixelsPerUnitMultiplier = sourceImg.pixelsPerUnitMultiplier;
+                }
+            }
+
+            Button toggleBtn = toggleButton.AddComponent<Button>();
+            GameObject toggleButtonLabel = new GameObject("Text");
+            toggleButtonLabel.transform.SetParent(toggleButton.transform, worldPositionStays: false);
+            RectTransform toggleButtonLabelRect = toggleButtonLabel.AddComponent<RectTransform>();
+            toggleButtonLabelRect.anchorMin = Vector2.zero;
+            toggleButtonLabelRect.anchorMax = Vector2.one;
+            toggleButtonLabelRect.sizeDelta = Vector2.zero;
+            TextMeshProUGUI toggleButtonText = toggleButtonLabel.AddComponent<TextMeshProUGUI>();
+            toggleButtonText.text = Plugin.UWEnabled.Value ? "x" : "";
+            toggleButtonText.fontSize = 16f;
+            toggleButtonText.alignment = TextAlignmentOptions.Center;
+            font(toggleButtonText, bruh);
+            toggleBtn.onClick.AddListener(() =>
+            {
+                Plugin.UWEnabled.Value = !Plugin.UWEnabled.Value;
+                toggleButtonText.text = Plugin.UWEnabled.Value ? "x" : "";
+                ApplyRes();
+                Refreshelement();
+            });
         }
         private static void Refreshelement()
         {
-            Reselement marker = UnityEngine.Object.FindObjectOfType<Reselement>(includeInactive: true);
-            if (marker == null) return;
-            Transform vt = marker.transform.Find("Value");
-            if (vt == null) return;
-            TextMeshProUGUI valueText = vt.GetComponent<TextMeshProUGUI>();
-            if (valueText == null) return;
-            valueText.text = UWOn ? UWPresets[UWIndex].label : Presets[Indexx].label;
+            Reselement[] markers = UnityEngine.Object.FindObjectsOfType<Reselement>(includeInactive: true);
+
+            if (markers == null || markers.Length == 0)
+            {
+                newboxsize = null;
+                oldboxsize = Vector2.zero;
+                return;
+            }
+
+            foreach (Reselement marker in markers)
+            {
+                Transform vt = marker.transform.Find("Value");
+                if (vt != null)
+                {
+                    TextMeshProUGUI valueText = vt.GetComponent<TextMeshProUGUI>();
+                    if (valueText != null)
+                        valueText.text = UWOn ? UWPresets[UWIndex].label : Presets[Indexx].label;
+                }
+
+                Transform cb = marker.transform.Find("Checkbox/Text");
+                if (cb != null)
+                {
+                    TextMeshProUGUI cbText = cb.GetComponent<TextMeshProUGUI>();
+                    if (cbText != null)
+                        cbText.text = Plugin.UWEnabled.Value ? "x" : "";
+                }
+            }
         }
         private static void font(TextMeshProUGUI target, SettingsOption[] options)
         {
@@ -580,11 +795,9 @@ namespace HDPlus.Patches
                     Dictionary<RectTransform, ScanNodeProperties> ___scanNodes)
         {
             if (!UWOn) return;
-
             RectTransform[] scanElements = __instance.scanElements;
             GameObject playerScreen = __instance.playerScreenTexture.gameObject;
             if (!playerScreen.TryGetComponent(out RectTransform screenTransform)) return;
-
             Rect rect = screenTransform.rect;
             for (int i = 0; i < scanElements.Length; i++)
             {
@@ -599,6 +812,5 @@ namespace HDPlus.Patches
             }
         }
     }
-
     internal class Reselement : MonoBehaviour { }
 }
