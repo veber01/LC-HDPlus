@@ -21,13 +21,20 @@ internal class Plugin : BaseUnityPlugin
         Instance = this;
         Logger = base.Logger;
 
-        ResValue = Config.Bind("Resolution","Index:",0,"Presets. 0=860x520 (vanilla), 1=1280x720, 2=1920x1080, 3=2560x1440, 4=3840x2160");
-        UWEnabled = Config.Bind("Ultrawide","Enabled",false,"Enable 21:9 ultrawide support.");
-        UWResValue = Config.Bind("Ultrawide","Index",0,"Ultrawide presets. 0=860x520 (vanilla), 1=2560x1080, 2=3440x1440"
+        ResValue = Config.Bind("Resolution", "Index:", 0, "Presets. 0=860x520 (vanilla), 1=1280x720, 2=1920x1080, 3=2560x1440, 4=3840x2160");
+        UWEnabled = Config.Bind("Ultrawide", "Enabled", false, "Enable 21:9 ultrawide support.");
+        UWResValue = Config.Bind("Ultrawide", "Index", 0, "Ultrawide presets. 0=860x520 (vanilla), 1=2560x1080, 2=3440x1440"
     );
+
+        //Dissonance stuff for lagfix
+        Dissonance.Logs.SetLogLevel(Dissonance.LogCategory.Recording, Dissonance.LogLevel.Error);
+        Dissonance.Logs.SetLogLevel(Dissonance.LogCategory.Playback, Dissonance.LogLevel.Error);
+        Dissonance.Logs.SetLogLevel(Dissonance.LogCategory.Network, Dissonance.LogLevel.Error);
+
 
         Harmony ??= new Harmony(MyPluginInfo.PLUGIN_GUID);
         Harmony.PatchAll(typeof(ResolutionPatch));
+        Harmony.PatchAll(typeof(RPCLag));
         Logger.LogInfo($"{MyPluginInfo.PLUGIN_GUID} v{MyPluginInfo.PLUGIN_VERSION} has loaded!");
     }
 

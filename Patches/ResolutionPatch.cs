@@ -182,6 +182,8 @@ namespace HDPlus.Patches
                 _preUWTerminalWidth = _terminal.playerScreenTexHighRes.width;
                 _preUWTerminalHeight = _terminal.playerScreenTexHighRes.height;
             }
+
+            _preUWStateSaved = true;
         }
 
         private static void ResetAspect()
@@ -195,9 +197,11 @@ namespace HDPlus.Patches
             Camera? camera = GameNetworkManager.Instance?.localPlayerController?.gameplayCamera;
             if (camera != null)
             {
+                // Always restore to original vanilla FOV when disabling ultrawide
                 camera.fieldOfView = _originalGameplayFOV;
                 camera.ResetAspect();
             }
+
             if (_panel != null)
             {
                 _panel.aspectRatio = _originalPanelAspect;
@@ -273,6 +277,7 @@ namespace HDPlus.Patches
         private static Vector2 _preUWInvPos = Vector2.zero;
         private static int _preUWTerminalWidth = -1;
         private static int _preUWTerminalHeight = -1;
+        private static bool _preUWStateSaved = false;
         private static AspectRatioFitter? _panel = null;
         private static CanvasScaler? _canvas = null;
         private static Camera? _camera = null;
@@ -367,7 +372,6 @@ namespace HDPlus.Patches
         [HarmonyPostfix]
         private static void pcb(PlayerControllerB __instance)
         {
-            if (!__instance.IsOwner) return;
             if (__instance.gameplayCamera?.targetTexture == null) return;
             SaveOrigs();
             applyres(__instance.gameplayCamera.targetTexture);
@@ -425,34 +429,18 @@ namespace HDPlus.Patches
 
         private static void Injectbutton(IngamePlayerSettings instance)
         {
-            if (newboxsize != null && newboxsize.Equals(null))
-            {
-                newboxsize = null;
-                oldboxsize = Vector2.zero;
-            }
             var activePresets = UWOn ? UWPresets : Presets;
             int activeIndex = UWOn ? UWIndex : Indexx;
 
-            Reselement[] existing = UnityEngine.Object.FindObjectsOfType<Reselement>(includeInactive: true);
-            if (existing != null && existing.Length > 0)
+            Reselement existing = UnityEngine.Object.FindObjectOfType<Reselement>(includeInactive: true);
+            if (existing != null)
             {
-                foreach (Reselement el in existing)
+                Transform vt = existing.transform.Find("Value");
+                if (vt != null)
                 {
-                    Transform vt = el.transform.Find("Value");
-                    if (vt != null)
-                    {
-                        TextMeshProUGUI vtext = vt.GetComponent<TextMeshProUGUI>();
-                        if (vtext != null)
-                            vtext.text = activePresets[activeIndex].label;
-                    }
-
-                    Transform cb = el.transform.Find("Checkbox/Text");
-                    if (cb != null)
-                    {
-                        TextMeshProUGUI cbText = cb.GetComponent<TextMeshProUGUI>();
-                        if (cbText != null)
-                            cbText.text = Plugin.UWEnabled.Value ? "x" : "";
-                    }
+                    TextMeshProUGUI vtext = vt.GetComponent<TextMeshProUGUI>();
+                    if (vtext != null)
+                        vtext.text = activePresets[activeIndex].label;
                 }
                 return;
             }
@@ -518,7 +506,7 @@ namespace HDPlus.Patches
                 rootRect.sizeDelta = pixelResRect.sizeDelta;
                 rootRect.anchoredPosition = new Vector2(
                     pixelResRect.anchoredPosition.x,
-                    pixelResRect.anchoredPosition.y - (pixelResRect.sizeDelta.y * 2f) - 10f
+                    pixelResRect.anchoredPosition.y - (pixelResRect.sizeDelta.y * 2f) - 20f
                 );
             }
             else
@@ -550,7 +538,7 @@ namespace HDPlus.Patches
                                 if (newboxsize != null && pixelResRect != null)
                                 {
                                     oldboxsize = newboxsize.sizeDelta;
-                                    float growth = (pixelResRect.sizeDelta.y * 2f) + 7f;
+                                    float growth = (pixelResRect.sizeDelta.y * 2f) + 27f;
                                     newboxsize.sizeDelta = new Vector2(
                                         oldboxsize.x,
                                         oldboxsize.y + growth
@@ -668,7 +656,34 @@ namespace HDPlus.Patches
             toggleRoot.transform.SetParent(container, worldPositionStays: false);
             toggleRoot.AddComponent<Reselement>();
 
+            for (int i = 0; i < container.childCount; i++)
+            {
+                if (container.GetChild(i).name == "PixelRes")
+                {
+                    toggleRoot.transform.SetSiblingIndex(i + 2);
+                    break;
+                }
+            }
+
             RectTransform toggleRootRect = toggleRoot.AddComponent<RectTransform>();
+            Image toggleRootBg = toggleRoot.AddComponent<Image>();
+
+            if (pixelResObj != null)
+            {
+                Image sourceImg = pixelResObj.GetComponentInChildren<Image>();
+                if (sourceImg != null)
+                {
+                    toggleRootBg.sprite = sourceImg.sprite;
+                    toggleRootBg.type = Image.Type.Sliced;
+                    toggleRootBg.fillCenter = true;
+                    toggleRootBg.color = sourceImg.color;
+                    toggleRootBg.pixelsPerUnitMultiplier = sourceImg.pixelsPerUnitMultiplier;
+                }
+            }
+            else
+            {
+                toggleRootBg.color = new Color(0.1f, 0.1f, 0.1f, 0.5f);
+            }
 
             if (pixelResRect != null)
             {
@@ -678,7 +693,7 @@ namespace HDPlus.Patches
                 toggleRootRect.sizeDelta = pixelResRect.sizeDelta;
                 toggleRootRect.anchoredPosition = new Vector2(
                     pixelResRect.anchoredPosition.x,
-                    pixelResRect.anchoredPosition.y - (pixelResRect.sizeDelta.y * 2f) - 40f
+                    pixelResRect.anchoredPosition.y - (pixelResRect.sizeDelta.y * 2f) - 60f
                 );
             }
             else
@@ -701,6 +716,7 @@ namespace HDPlus.Patches
             toggleLabelText.text = "Enable ultrawide";
             toggleLabelText.fontSize = 13f;
             toggleLabelText.alignment = TextAlignmentOptions.MidlineLeft;
+            toggleLabelText.raycastTarget = false;
             font(toggleLabelText, bruh);
 
             GameObject toggleButton = new GameObject("Checkbox");
@@ -712,6 +728,7 @@ namespace HDPlus.Patches
             toggleButtonRect.sizeDelta = Vector2.zero;
             toggleButtonRect.anchoredPosition = Vector2.zero;
             Image toggleButtonImg = toggleButton.AddComponent<Image>();
+            toggleButtonImg.raycastTarget = true;
 
             if (pixelResObj != null)
             {
@@ -727,6 +744,7 @@ namespace HDPlus.Patches
             }
 
             Button toggleBtn = toggleButton.AddComponent<Button>();
+
             GameObject toggleButtonLabel = new GameObject("Text");
             toggleButtonLabel.transform.SetParent(toggleButton.transform, worldPositionStays: false);
             RectTransform toggleButtonLabelRect = toggleButtonLabel.AddComponent<RectTransform>();
@@ -737,7 +755,9 @@ namespace HDPlus.Patches
             toggleButtonText.text = Plugin.UWEnabled.Value ? "x" : "";
             toggleButtonText.fontSize = 16f;
             toggleButtonText.alignment = TextAlignmentOptions.Center;
+            toggleButtonText.raycastTarget = false;
             font(toggleButtonText, bruh);
+
             toggleBtn.onClick.AddListener(() =>
             {
                 Plugin.UWEnabled.Value = !Plugin.UWEnabled.Value;
@@ -748,33 +768,13 @@ namespace HDPlus.Patches
         }
         private static void Refreshelement()
         {
-            Reselement[] markers = UnityEngine.Object.FindObjectsOfType<Reselement>(includeInactive: true);
-
-            if (markers == null || markers.Length == 0)
-            {
-                newboxsize = null;
-                oldboxsize = Vector2.zero;
-                return;
-            }
-
-            foreach (Reselement marker in markers)
-            {
-                Transform vt = marker.transform.Find("Value");
-                if (vt != null)
-                {
-                    TextMeshProUGUI valueText = vt.GetComponent<TextMeshProUGUI>();
-                    if (valueText != null)
-                        valueText.text = UWOn ? UWPresets[UWIndex].label : Presets[Indexx].label;
-                }
-
-                Transform cb = marker.transform.Find("Checkbox/Text");
-                if (cb != null)
-                {
-                    TextMeshProUGUI cbText = cb.GetComponent<TextMeshProUGUI>();
-                    if (cbText != null)
-                        cbText.text = Plugin.UWEnabled.Value ? "x" : "";
-                }
-            }
+            Reselement marker = UnityEngine.Object.FindObjectOfType<Reselement>(includeInactive: true);
+            if (marker == null) return;
+            Transform vt = marker.transform.Find("Value");
+            if (vt == null) return;
+            TextMeshProUGUI valueText = vt.GetComponent<TextMeshProUGUI>();
+            if (valueText == null) return;
+            valueText.text = UWOn ? UWPresets[UWIndex].label : Presets[Indexx].label;
         }
         private static void font(TextMeshProUGUI target, SettingsOption[] options)
         {
@@ -795,9 +795,11 @@ namespace HDPlus.Patches
                     Dictionary<RectTransform, ScanNodeProperties> ___scanNodes)
         {
             if (!UWOn) return;
+
             RectTransform[] scanElements = __instance.scanElements;
             GameObject playerScreen = __instance.playerScreenTexture.gameObject;
             if (!playerScreen.TryGetComponent(out RectTransform screenTransform)) return;
+
             Rect rect = screenTransform.rect;
             for (int i = 0; i < scanElements.Length; i++)
             {
@@ -812,5 +814,6 @@ namespace HDPlus.Patches
             }
         }
     }
+
     internal class Reselement : MonoBehaviour { }
 }

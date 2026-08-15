@@ -1,7 +1,7 @@
 {
-  "version": 3,
+  "version": 4,
   "targets": {
-    ".NETStandard,Version=v2.1": {
+    "netstandard2.1": {
       "BepInEx.Analyzers/1.0.8": {
         "type": "package"
       },
@@ -53,7 +53,7 @@
           }
         }
       },
-      "LethalCompany.GameLibs.Steam/81.0.0-ngd.0": {
+      "LethalCompany.GameLibs.Steam/81.0.5-ngd.0": {
         "type": "package",
         "dependencies": {
           "Newtonsoft.JSON": "13.0.3",
@@ -648,15 +648,6 @@
           }
         }
       },
-      "TeamBMX.LobbyCompatibility/1.5.1": {
-        "type": "package",
-        "compile": {
-          "lib/netstandard2.1/BMX.LobbyCompatibility.dll": {}
-        },
-        "runtime": {
-          "lib/netstandard2.1/BMX.LobbyCompatibility.dll": {}
-        }
-      },
       "UnityEngine.Modules/2022.3.62": {
         "type": "package",
         "compile": {
@@ -808,14 +799,14 @@
         "logo_mini.png"
       ]
     },
-    "LethalCompany.GameLibs.Steam/81.0.0-ngd.0": {
-      "sha512": "Wq4UBgTco96fJSrIOLbgqeIC3/D1MEdvngv43aVVR51UOuAmHPE0Pid6AYtV4cXlE74RdCtmAJGFT3uK+tDZgg==",
+    "LethalCompany.GameLibs.Steam/81.0.5-ngd.0": {
+      "sha512": "q1+j5z4lP0TKO16uZ2NclNr9/mb3BUgl6mUO7zbPwbyEHIPJ4m6805rxP0w8mxe4NWNcQRoBkWrIpiNrwak8Hg==",
       "type": "package",
-      "path": "lethalcompany.gamelibs.steam/81.0.0-ngd.0",
+      "path": "lethalcompany.gamelibs.steam/81.0.5-ngd.0",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
-        "lethalcompany.gamelibs.steam.81.0.0-ngd.0.nupkg.sha512",
+        "lethalcompany.gamelibs.steam.81.0.5-ngd.0.nupkg.sha512",
         "lethalcompany.gamelibs.steam.nuspec",
         "ref/netstandard2.1/AmazingAssets.TerrainToMesh.dll",
         "ref/netstandard2.1/Assembly-CSharp-firstpass.dll",
@@ -2694,22 +2685,6 @@
         "system.threading.tasks.nuspec"
       ]
     },
-    "TeamBMX.LobbyCompatibility/1.5.1": {
-      "sha512": "U1taVjagI6Ma1v7EXLX9dJpJJGHBt8R2UIdOgPu/k87ZFc9qER19a4C1FPigM7qBdE6/pzXo8ovwuPrRRFb51g==",
-      "type": "package",
-      "path": "teambmx.lobbycompatibility/1.5.1",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "CHANGELOG.md",
-        "README.md",
-        "icon_128x128.png",
-        "lib/net472/BMX.LobbyCompatibility.dll",
-        "lib/netstandard2.1/BMX.LobbyCompatibility.dll",
-        "teambmx.lobbycompatibility.1.5.1.nupkg.sha512",
-        "teambmx.lobbycompatibility.nuspec"
-      ]
-    },
     "UnityEngine.Modules/2022.3.62": {
       "sha512": "zpu5dELUCFt7Rvvzp50iTrfVusJg+2gmlcaytGEoHYuIP+AOv57X272czjp+sA8N1onPo/IiHFnOEFtT9rLJBA==",
       "type": "package",
@@ -2920,12 +2895,11 @@
     }
   },
   "projectFileDependencyGroups": {
-    ".NETStandard,Version=v2.1": [
+    "netstandard2.1": [
       "BepInEx.Analyzers >= 1.*",
       "BepInEx.Core >= 5.*",
       "BepInEx.PluginInfoProps >= 2.*",
       "LethalCompany.GameLibs.Steam >= *-*",
-      "TeamBMX.LobbyCompatibility >= 1.*",
       "UnityEngine.Modules >= 2022.3.62"
     ]
   },
@@ -2933,7 +2907,7 @@
     "C:\\Users\\veber\\.nuget\\packages\\": {}
   },
   "project": {
-    "version": "1.2.0",
+    "version": "1.2.1",
     "restore": {
       "projectUniqueName": "D:\\Lethal Company\\HappyMods\\HDPlus\\HDPlus\\HDPlus.csproj",
       "projectName": "happyness.hdplus",
@@ -2954,6 +2928,7 @@
       },
       "frameworks": {
         "netstandard2.1": {
+          "framework": "netstandard2.1",
           "targetAlias": "netstandard2.1",
           "projectReferences": {}
         }
@@ -2968,10 +2943,11 @@
         "auditLevel": "low",
         "auditMode": "direct"
       },
-      "SdkAnalysisLevel": "10.0.200"
+      "SdkAnalysisLevel": "10.0.300"
     },
     "frameworks": {
       "netstandard2.1": {
+        "framework": "netstandard2.1",
         "targetAlias": "netstandard2.1",
         "dependencies": {
           "BepInEx.Analyzers": {
@@ -2993,11 +2969,6 @@
             "suppressParent": "All",
             "target": "Package",
             "version": "[*-*, )"
-          },
-          "TeamBMX.LobbyCompatibility": {
-            "suppressParent": "All",
-            "target": "Package",
-            "version": "[1.*, )"
           },
           "UnityEngine.Modules": {
             "include": "Compile",
@@ -3022,7 +2993,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.202\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.301\\RuntimeIdentifierGraph.json"
       }
     }
   }

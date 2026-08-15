@@ -1,3 +1,8 @@
+# v1.2.1
+
+- Fixed menubuttons to be present outside of settings menu.
+- Changed Dissonance logs and RPCLogs to "Error" only to reduce logspam and small stutterings.
+
 # v1.2.0
 
 - Added a checkbox type button below the resolution option to enable or disable ultrawide resolutions.
